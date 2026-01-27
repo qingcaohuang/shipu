@@ -453,10 +453,17 @@ def generate_pdf(recipe):
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
     try:
-        pdfmetrics.registerFont(TTFont('SourceHanSansCN-Regular', FONT_PATH))
-        f_n = 'SourceHanSansCN-Regular'
+        pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
+        f_n = 'SimHei'
     except Exception as e:
         st.warning(f"⚠️ PDF字体加载失败 ({e})，中文将无法显示。请确保 font.ttf 已上传且位于程序同级目录。")
+        err_msg = str(e)
+        if "postscript outlines" in err_msg.lower():
+            st.warning("⚠️ PDF字体格式不兼容：检测到 PostScript 轮廓。请勿直接重命名 .otf 文件，需使用原生 TrueType (.ttf) 字体（如 SimHei 或转换后的 TTF）。")
+        elif not os.path.exists(FONT_PATH):
+            st.warning(f"⚠️ PDF字体文件未找到：{FONT_PATH}。请确保已上传 font.ttf。")
+        else:
+            st.warning(f"⚠️ PDF字体加载失败 ({e})，中文将无法显示。")
         f_n = 'Helvetica'
 
     def draw_text_block(text, x, y, max_w, line_height=15):
@@ -881,6 +888,9 @@ with main_col:
                 save_to_local_delete(r, file_path=st.session_state.current_excel_path)
                 st.success("已删除。")
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
+    else:
+        st.title("👋 私房云端厨房")
+        st.info("← 请从左侧选择功能模块开始。")ll_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     else:
         st.title("👋 私房云端厨房")
         st.info("← 请从左侧选择功能模块开始。")
