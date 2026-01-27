@@ -560,7 +560,7 @@ with side_col:
 
     if st.session_state.nav_choice == "✨ AI生成":
         if st.button("🆕 新创作", use_container_width=True):
-            st.session_state.last_gen = None; st.session_state.reasoning_cache = None; st.rerun()
+            st.session_state.last_gen = None; st.session_state.reasoning_cache = None; st.session_state.gen_saved = False; st.rerun()
         an = st.text_input("菜名灵感", placeholder="输入菜名")
         ai = st.text_input("现有食材")
         tc = st.columns(4)
@@ -576,9 +576,10 @@ with side_col:
                 if res: st.session_state.last_gen = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
     elif st.session_state.nav_choice == "📥 ":
+    elif st.session_state.nav_choice == "📥 AI提取":
         if st.button("🆕 重新提取", use_container_width=True):
             st.session_state.last_import = None; st.session_state.reasoning_cache = None
-            if "import_raw_input" in st.session_state: st.session_state["import_raw_input"] = ""
+            if "import_raw_input" in st.session_state: st.session_state["import_raw_input"] = ""; st.session_state.imp_saved = False
             st.rerun()
         ri = st.text_area("内容/链接", height=180, key="import_raw_input")
         if st.button("🧠 解析", type="primary", use_container_width=True):
@@ -605,23 +606,30 @@ with side_col:
                 rerun_safe()
 
         if st.session_state.manage_mode:
-            # [新增] 本地文档导入与路径选择功能
-            with st.expander("📂 工作文件与导入管理", expanded=False):
-                st.caption("管理当前使用的 Excel 数据库文件。上传文件将覆盖下方指定路径的文件。")
+            # [修改] 简化为本地数据上传/下载模式，隐藏路径细节
+            with st.expander("📂 数据存取 (本地 <-> 云端)", expanded=True):
+                st.caption("当前操作的是云端临时数据。您可以上传本地 Excel 恢复工作，或将当前数据下载到本地保存。")
                 
-                target_p = st.text_input("当前工作文件全路径", value=st.session_state.current_excel_path, key="manage_path_input", help="指定服务器端保存/读取的完整路径")
-                up_file = st.file_uploader("上传本地 Excel 文件 (覆盖加载)", type=["xlsx"], key="manage_uploader")
-                
-                if st.button("🔄 加载 / 切换文件", use_container_width=True):
+                col_up, col_down = st.columns(2)
+                with col_up:
+                    up_file = st.file_uploader("📤 上传本地 Excel (覆盖当前)", type=["xlsx"], key="manage_uploader")
                     if up_file:
-                        with open(target_p, "wb") as f:
-                            f.write(up_file.getbuffer())
-                        st.toast(f"文件已上传并保存至: {target_p}")
-                    
-                    st.session_state.current_excel_path = target_p
-                    st.session_state.all_recipes_cache = load_local_recipes(target_p)
-                    st.success(f"已切换工作文件 (共 {len(st.session_state.all_recipes_cache)} 条)")
-                    time.sleep(1); st.rerun()
+                        if st.button("⚠️ 确认覆盖并加载", use_container_width=True):
+                            target_p = st.session_state.current_excel_path
+                            with open(target_p, "wb") as f:
+                                f.write(up_file.getbuffer())
+                            st.session_state.all_recipes_cache = load_local_recipes(target_p)
+                            st.toast(f"已加载数据，共 {len(st.session_state.all_recipes_cache)} 条")
+                            time.sleep(1); st.rerun()
+                
+                with col_down:
+                    st.write("⬇️ 保存数据到本地")
+                    target_p = st.session_state.current_excel_path
+                    if os.path.exists(target_p):
+                        with open(target_p, "rb") as f:
+                            st.download_button("💾 下载 Excel 文件", data=f, file_name=f"recipes_{datetime.now().strftime('%Y%m%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                    else:
+                        st.info("暂无数据")
 
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
@@ -749,12 +757,16 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            curr_path = os.path.abspath(st.session_state.current_excel_path)
-            save_path = st.text_input("存储路径 (完整路径)", value=curr_path, help="指定保存的本地Excel文件完整路径")
-            if st.form_submit_button("🚀 存档", use_container_width=True):
+            if st.form_submit_button("🚀 内容下载保存到本地", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
-                save_to_local_append(record, file_path=save_path)
-                st.success(f"已保存到: {save_path}")
+                save_to_local_append(record, file_path=st.session_state.current_excel_path)
+                st.session_state.gen_saved = True
+
+        if st.session_state.get('gen_saved'):
+            st.success("✅ 内容已录入云端缓存。请点击下方按钮下载文件：")
+            if os.path.exists(st.session_state.current_excel_path):
+                with open(st.session_state.current_excel_path, "rb") as f:
+                    st.download_button("⬇️ 下载 Excel 文件", data=f, file_name=os.path.basename(st.session_state.current_excel_path), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
     elif st.session_state.nav_choice == "📥 AI提取" and st.session_state.last_import:
         r = st.session_state.last_import
@@ -767,12 +779,16 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            curr_path = os.path.abspath(st.session_state.current_excel_path)
-            save_path = st.text_input("存储路径 (完整路径)", value=curr_path, help="指定保存的本地Excel文件完整路径")
-            if st.form_submit_button("🚀 导入并存档", use_container_width=True):
+            if st.form_submit_button("🚀 内容下载保存到本地", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
-                save_to_local_append(record, file_path=save_path)
-                st.success(f"已保存到: {save_path}")
+                save_to_local_append(record, file_path=st.session_state.current_excel_path)
+                st.session_state.imp_saved = True
+
+        if st.session_state.get('imp_saved'):
+            st.success("✅ 内容已录入云端缓存。请点击下方按钮下载文件：")
+            if os.path.exists(st.session_state.current_excel_path):
+                with open(st.session_state.current_excel_path, "rb") as f:
+                    st.download_button("⬇️ 下载 Excel 文件", data=f, file_name=os.path.basename(st.session_state.current_excel_path), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
     elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
