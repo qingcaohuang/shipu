@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import json
 import tempfile
 import os
@@ -29,6 +30,20 @@ st.set_page_config(page_title="AI云端厨房实验室", layout="wide")
 # 版本号定义
 VERSION = "V1.4.6 (Local-Only)"
 CONFIG_FILE = ".ai_configs.json"
+
+# [新增] 注入 JS 拦截浏览器关闭/刷新事件，弹出原生确认对话框
+components.html(
+    """
+    <script>
+        window.parent.addEventListener('beforeunload', function (e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    </script>
+    """,
+    height=0,
+    width=0
+)
 
 st.markdown(f"""
     <style>
@@ -603,7 +618,10 @@ with side_col:
         with colr:
             if st.button("🔄 刷新目录", use_container_width=True):
                 try:
-                    st.session_state.all_recipes_cache = load_local_recipes()
+                    st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
+                    st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
+                    st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
+                    st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
                 except Exception as e: st.warning(f"刷新失败: {e}")
         with colm:
             if st.button("🗂️ 食谱管理", use_container_width=True):
