@@ -47,52 +47,85 @@ components.html(
 
 st.markdown(f"""
     <style>
-    .stApp {{ background-color: #F8F9FA; font-family: -apple-system, sans-serif; }}
-    div[data-testid="stVerticalBlock"] > div {{
-        gap: 0.1rem !important;
-        padding-bottom: 0rem !important;
+    /* 全局字体与背景 - 温暖的米白色背景 */
+    .stApp {{
+        background-color: #F9F9F9;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }}
     
+    /* 侧边栏样式 - 纯白背景加轻微阴影 */
     section[data-testid="stSidebar"] {{
         background-color: #FFFFFF;
-        border-right: 1px solid #EBEBEB;
+        border-right: 1px solid #F0F0F0;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.02);
     }}
 
+    /* 调整垂直间距 */
+    div[data-testid="stVerticalBlock"] > div {{
+        gap: 0.5rem !important;
+    }}
+    
+    /* 按钮通用样式 - 扁平化、圆角 */
     div.stButton > button {{
-        border-radius: 10px !important;
-        height: 42px !important;
-        transition: all 0.2s ease !important;
+        border-radius: 8px !important;
+        border: 1px solid #E0E0E0 !important;
+        background-color: #FFFFFF !important;
+        color: #4A4A4A !important;
         font-weight: 500 !important;
-        font-size: 13px !important;
+        height: 40px !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div.stButton > button:hover {{
+        border-color: #FF9F43 !important;
+        color: #FF9F43 !important;
+        background-color: #FFF8F0 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }}
+    
+    /* 主按钮 (Primary) - 橙色主题 */
+    div.stButton > button[kind="primary"] {{
+        background-color: #FF9F43 !important;
+        color: white !important;
         border: none !important;
+        box-shadow: 0 2px 5px rgba(255, 159, 67, 0.3);
+    }}
+    div.stButton > button[kind="primary"]:hover {{
+        background-color: #FF8C1A !important;
+        box-shadow: 0 4px 10px rgba(255, 159, 67, 0.4);
     }}
     
-    .config-box {{
-        padding: 10px;
+    /* 导航按钮激活状态 */
+    .nav-active button {{
+        background-color: #FF9F43 !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 4px 8px rgba(255, 159, 67, 0.2);
+    }}
+    
+    /* 输入框优化 */
+    .stTextInput input, .stTextArea textarea {{
+        border-radius: 8px !important;
+        border: 1px solid #E0E0E0 !important;
+        padding: 10px !important;
+    }}
+    .stTextInput input:focus, .stTextArea textarea:focus {{
+        border-color: #FF9F43 !important;
+        box-shadow: 0 0 0 1px #FF9F43 !important;
+    }}
+    
+    /* 详情页卡片样式 */
+    .detail-card {
+        background-color: #FFFFFF;
+        padding: 30px;
         border-radius: 12px;
-        margin-top: 5px;
-    }}
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        border: 1px solid #F5F5F5;
+    }
     
-    /* 极致压缩输入框高度 */
-    .stTextInput input {{ height: 35px !important; padding: 8px !important; }}
-    .stTextArea textarea {{ padding: 8px !important; }}
     .block-container {{ padding-top: 1.5rem !important; }}
-    
-    .version-text {{ color: #AEAEB2; font-size: 10px; text-align: right; }}
+    .version-text {{ color: #B0B0B0; font-size: 11px; text-align: center; margin-top: 20px; }}
     </style>
-""", unsafe_allow_html=True)
-
-# Recipe list styling
-st.markdown("""
-<style>
-.recipe-grid .stButton>button {
-    background-color: #E6F7FF !important;
-    color: #004A8F !important;
-    border-radius: 8px !important;
-    height: 40px !important;
-    font-weight: 500 !important;
-}
-</style>
 """, unsafe_allow_html=True)
 
 # --- 模型管理辅助函数 ---
@@ -474,8 +507,7 @@ def generate_pdf(recipe):
 side_col, main_col = st.columns([1.6, 4.5])
 
 with side_col:
-    st.markdown(f'<div class="version-text">Cook Lab {VERSION}</div>', unsafe_allow_html=True)
-    st.subheader("🍳 智汇厨房")
+    st.markdown(f'<div style="text-align:center; font-weight:bold; font-size:1.2em; color:#FF9F43; margin-bottom:10px;">🍳 智汇厨房</div>', unsafe_allow_html=True)
     
     # [新增] 启动时的安全提示
     if 'safety_warning_shown' not in st.session_state:
@@ -488,7 +520,7 @@ with side_col:
         st.session_state.safety_warning_shown = True
     
     # sc1, sc2 = st.columns([4, 1]) # 移除状态灯列
-    with st.container():
+    with st.container(border=True):
         with st.expander("🔑 AI 接口管理", expanded=False):
             model_options = list(st.session_state.ai_configs.keys())
             try: curr_idx = model_options.index(st.session_state.current_config_name)
@@ -563,23 +595,22 @@ with side_col:
                     else: st.error("需保留一项")
 
     # 2x2 网格导航
-    nav_config = [("✨ 生成", "✨ AI生成", "gen"), ("📥 提取", "📥 AI提取", "imp"), ("📚 目录", "📚 菜谱目录", "list"), ("🔍 搜索", "🔍 全文搜索", "src")]
+    st.markdown("###") # Spacer
+    nav_config = [("✨ AI 生成", "✨ AI生成"), ("📥 AI 提取", "📥 AI提取"), ("📚 菜谱目录", "📚 菜谱目录"), ("🔍 全文搜索", "🔍 全文搜索")]
     for i in range(0, 4, 2):
         nc1, nc2 = st.columns(2)
         for idx, col in enumerate([nc1, nc2]):
-            lbl, val, css = nav_config[i+idx]
+            lbl, val = nav_config[i+idx]
             is_active = st.session_state.nav_choice == val
             with col:
-                st.markdown(f'<div class="{"nav-"+css+"-active" if is_active else "nav-"+css+"-inactive"}">', unsafe_allow_html=True)
+                st.markdown(f'<div class="{"nav-active" if is_active else ""}">', unsafe_allow_html=True)
                 if st.button(lbl, key=f"btn_{val}", use_container_width=True):
                     st.session_state.nav_choice = val
                     if val == "🔍 全文搜索": st.session_state.active_recipe = None
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
     
-    # 功能配置区块
-    bg_colors = {"✨ AI生成": "#FFF5EE", "📥 AI提取": "#F0F9F1", "📚 菜谱目录": "#FFFBE6", "🔍 全文搜索": "#F6F0FA"}
-    st.markdown(f'<div class="config-box" style="background-color: {bg_colors.get(st.session_state.nav_choice, "#FFF")};">', unsafe_allow_html=True)
+    st.markdown(f'<div class="version-text">Cook Lab {VERSION}</div>', unsafe_allow_html=True)
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
@@ -589,12 +620,13 @@ with side_col:
         an = st.text_input("菜名灵感", placeholder="输入菜名")
         ai = st.text_input("现有食材")
         tc = st.columns(4)
-        tags = ["家常菜", "川菜", "西餐", "酱料", "发酵物", "烘焙", "饮品", "其他"]
+        tags = ["家常", "川菜", "西餐", "减脂", "烘焙", "饮品", "汤羹", "小吃"]
         for i, t in enumerate(tags):
             if tc[i%4].button(t, key=f"t_{t}"): st.session_state.selected_style = t
         cs = st.text_input("风格", value=st.session_state.selected_style)
         ai_notes = st.text_input("个性化要求", placeholder="如：少油、适合儿童...")
         ur = st.toggle("R1 思考 (DeepSeek专用)", value=True)
+        st.markdown("###")
         if st.button("🪄 生成", type="primary", use_container_width=True):
             with st.spinner("撰写中..."):
                 res, rsn = call_deepseek(current_ak_config, mode="generate", name=an, ing=ai, style=cs, notes=ai_notes, use_r1=ur)
@@ -736,7 +768,6 @@ with side_col:
 
         if not st.session_state.manage_mode:
             itms = st.session_state.all_recipes_cache
-            st.markdown('<div class="recipe-grid">', unsafe_allow_html=True)
             for i in range(0, len(itms), 2):
                 cl1, cl2 = st.columns(2)
                 r1 = itms[i]
@@ -746,7 +777,6 @@ with side_col:
                     r2 = itms[i+1]
                     if cl2.button(f"{r2.get('菜名')[:12]}", key=f"l_{i+1}", use_container_width=True):
                         st.session_state.active_recipe = r2; st.session_state.active_index = i + 3; st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.nav_choice == "🔍 全文搜索":
         kw = st.text_input("关键词", placeholder="搜索...")
@@ -767,7 +797,6 @@ with side_col:
                     _, idx2, r2 = rlts[i+1]
                     if sc2.button(f"🔍 {r2.get('菜名')[:12]}", key=f"s_{idx2}", use_container_width=True):
                         st.session_state.active_recipe = r2; st.session_state.active_index = idx2 + 2; st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 5. 主界面内容 ---
 with main_col:
@@ -813,14 +842,27 @@ with main_col:
 
     elif st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
-        st.subheader(f"{r['菜名']}")
         v, e = st.columns([2, 1])
         with v:
-            if r.get('故事'): st.info(f"**物语**：{r['故事']}")
-            st.write("**食材清单**"); st.write(r['食材'])
-            st.write("**制作步骤**"); st.write(r['步骤'])
-            if r.get('小贴士'): st.warning(f"💡 贴士：\n\n{r['小贴士']}")
+            # 使用 HTML/CSS 渲染卡片式详情
+            st.markdown(f"""
+            <div class="detail-card">
+                <div style="font-size:28px; font-weight:bold; color:#2C3E50; margin-bottom:10px; border-bottom:2px solid #FF9F43; padding-bottom:10px;">
+                    {r['菜名']}
+                </div>
+                <div style="color:#666; font-style:italic; margin-bottom:20px;">{r.get('故事', '')}</div>
+                <div style="font-size:18px; font-weight:bold; color:#FF9F43; margin-bottom:8px;">🥘 食材清单</div>
+                <div style="white-space: pre-wrap; line-height:1.6; color:#444; margin-bottom:20px;">{r['食材']}</div>
+                <div style="font-size:18px; font-weight:bold; color:#FF9F43; margin-bottom:8px;">👨‍🍳 制作步骤</div>
+                <div style="white-space: pre-wrap; line-height:1.6; color:#444;">{r['步骤']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if r.get('小贴士'): 
+                st.info(f"💡 **大厨贴士**：\n\n{r['小贴士']}")
+                
         with e:
+            st.caption("📝 编辑模式")
             un = st.text_input("菜名", r['菜名'])
             uc = st.text_input("分类", r.get('分类',''))
             ui = st.text_area("原料", r['食材'], height=110)
