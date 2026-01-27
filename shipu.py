@@ -28,7 +28,7 @@ except ImportError:
 st.set_page_config(page_title="AI云端厨房实验室", layout="wide")
 
 # 版本号定义
-VERSION = "V1.4.6 (Local-Only)"
+VERSION = "V1.5.0 (Local-Only)"
 CONFIG_FILE = ".ai_configs.json"
 
 # [新增] 注入 JS 拦截浏览器关闭/刷新事件，弹出原生确认对话框
@@ -116,12 +116,14 @@ st.markdown(f"""
     
     /* 详情页卡片样式 */
     .detail-card {
+    .detail-card {{
         background-color: #FFFFFF;
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.04);
         border: 1px solid #F5F5F5;
     }
+    }}
     
     .block-container {{ padding-top: 1.5rem !important; }}
     .version-text {{ color: #B0B0B0; font-size: 11px; text-align: center; margin-top: 20px; }}
