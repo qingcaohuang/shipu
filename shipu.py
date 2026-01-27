@@ -453,7 +453,7 @@ def generate_pdf(recipe):
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
     try:
-        pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
+        pdfmetrics.registerFont(TTFont('font', FONT_PATH))
         f_n = 'SimHei'
     except: f_n = 'Helvetica'
 
@@ -618,7 +618,7 @@ with side_col:
         an = st.text_input("菜名灵感", placeholder="输入菜名")
         ai = st.text_input("现有食材")
         tc = st.columns(4)
-        tags = ["家常", "川菜", "西餐", "减脂", "烘焙", "饮品", "汤羹", "小吃"]
+        tags = ["家常", "川菜", "西餐", "发酵物", "烘焙", "饮品", "蘸料", "其他"]
         for i, t in enumerate(tags):
             if tc[i%4].button(t, key=f"t_{t}"): st.session_state.selected_style = t
         cs = st.text_input("风格", value=st.session_state.selected_style)
