@@ -222,7 +222,7 @@ if 'manage_mode' not in st.session_state: st.session_state.manage_mode = False
 
 if 'current_excel_path' not in st.session_state:
     # [新增] 云端多用户隔离：默认使用带随机后缀的文件名，避免冲突
-    st.session_state.current_excel_path = f"data_{str(uuid.uuid4())[:8]}.xlsx"
+    st.session_state.current_excel_path = str((Path(get_app_dir()) / f"data_{str(uuid.uuid4())[:8]}.xlsx").resolve())
 
 if not st.session_state.all_recipes_cache:
     try: st.session_state.all_recipes_cache = load_local_recipes()
@@ -505,7 +505,7 @@ with side_col:
                      st.rerun()
             with col_preset2:
                 if st.button("Google 预设", use_container_width=True):
-                     st.session_state.pending_add_model_sync = {"name": "Google Gemini", "url": "https://generativelanguage.googleapis.com", "key": "", "id": "gemini-1.5-flash"}
+                     st.session_state.pending_add_model_sync = {"name": "Google Gemini", "url": "https://generativelanguage.googleapis.com", "key": "", "id": "gemini-2.5-flash"}
                      st.rerun()
 
             new_name = st.text_input("配置名称", key="add_model_name")
@@ -538,7 +538,7 @@ with side_col:
                     else: st.error("需保留一项")
 
     # 2x2 网格导航
-    nav_config = [("✨ 生成", "✨ AI生成", "gen"), ("📥 导入", "📥 智能导入", "imp"), ("📚 目录", "📚 菜谱目录", "list"), ("🔍 搜索", "🔍 全文搜索", "src")]
+    nav_config = [("✨ 生成", "✨ AI生成", "gen"), ("📥 提取", "📥 AI提取", "imp"), ("📚 目录", "📚 菜谱目录", "list"), ("🔍 搜索", "🔍 全文搜索", "src")]
     for i in range(0, 4, 2):
         nc1, nc2 = st.columns(2)
         for idx, col in enumerate([nc1, nc2]):
@@ -553,7 +553,7 @@ with side_col:
                 st.markdown('</div>', unsafe_allow_html=True)
 
     # 功能配置区块
-    bg_colors = {"✨ AI生成": "#FFF5EE", "📥 智能导入": "#F0F9F1", "📚 菜谱目录": "#FFFBE6", "🔍 全文搜索": "#F6F0FA"}
+    bg_colors = {"✨ AI生成": "#FFF5EE", "📥 AI提取": "#F0F9F1", "📚 菜谱目录": "#FFFBE6", "🔍 全文搜索": "#F6F0FA"}
     st.markdown(f'<div class="config-box" style="background-color: {bg_colors.get(st.session_state.nav_choice, "#FFF")};">', unsafe_allow_html=True)
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
@@ -575,8 +575,8 @@ with side_col:
                 res, rsn = call_deepseek(current_ak_config, mode="generate", name=an, ing=ai, style=cs, notes=ai_notes, use_r1=ur)
                 if res: st.session_state.last_gen = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
-    elif st.session_state.nav_choice == "📥 智能导入":
-        if st.button("🆕 重新导入", use_container_width=True):
+    elif st.session_state.nav_choice == "📥 ":
+        if st.button("🆕 重新提取", use_container_width=True):
             st.session_state.last_import = None; st.session_state.reasoning_cache = None
             if "import_raw_input" in st.session_state: st.session_state["import_raw_input"] = ""
             st.rerun()
@@ -606,22 +606,22 @@ with side_col:
 
         if st.session_state.manage_mode:
             # [新增] 本地文档导入与路径选择功能
-            with st.expander("📥 导入本地食谱文档 / 切换工作文件", expanded=False):
-                st.caption("云端运行时，请上传您的 Excel 文件以加载数据。不同用户请使用不同文件名以确保数据独立。")
-                col_imp1, col_imp2 = st.columns([2, 1])
-                with col_imp1:
-                    up_file = st.file_uploader("上传 Excel (.xlsx)", type=["xlsx"], key="manage_uploader")
-                with col_imp2:
-                    target_p = st.text_input("工作文件路径", value=st.session_state.current_excel_path, key="manage_path_input", help="指定服务器端保存/读取的文件名")
-                    if st.button("🔄 加载/切换", use_container_width=True):
-                        st.session_state.current_excel_path = target_p
-                        if up_file:
-                            with open(target_p, "wb") as f:
-                                f.write(up_file.getbuffer())
-                            st.toast(f"文件已保存至: {target_p}")
-                        st.session_state.all_recipes_cache = load_local_recipes(target_p)
-                        st.success(f"已切换至: {target_p} (共 {len(st.session_state.all_recipes_cache)} 条)")
-                        time.sleep(1); st.rerun()
+            with st.expander("📂 工作文件与导入管理", expanded=False):
+                st.caption("管理当前使用的 Excel 数据库文件。上传文件将覆盖下方指定路径的文件。")
+                
+                target_p = st.text_input("当前工作文件全路径", value=st.session_state.current_excel_path, key="manage_path_input", help="指定服务器端保存/读取的完整路径")
+                up_file = st.file_uploader("上传本地 Excel 文件 (覆盖加载)", type=["xlsx"], key="manage_uploader")
+                
+                if st.button("🔄 加载 / 切换文件", use_container_width=True):
+                    if up_file:
+                        with open(target_p, "wb") as f:
+                            f.write(up_file.getbuffer())
+                        st.toast(f"文件已上传并保存至: {target_p}")
+                    
+                    st.session_state.current_excel_path = target_p
+                    st.session_state.all_recipes_cache = load_local_recipes(target_p)
+                    st.success(f"已切换工作文件 (共 {len(st.session_state.all_recipes_cache)} 条)")
+                    time.sleep(1); st.rerun()
 
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
@@ -749,13 +749,14 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            save_path = st.text_input("存储路径 (Excel)", value=st.session_state.current_excel_path, help="指定保存的本地Excel文件路径")
+            curr_path = os.path.abspath(st.session_state.current_excel_path)
+            save_path = st.text_input("存储路径 (完整路径)", value=curr_path, help="指定保存的本地Excel文件完整路径")
             if st.form_submit_button("🚀 存档", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
                 save_to_local_append(record, file_path=save_path)
                 st.success(f"已保存到: {save_path}")
 
-    elif st.session_state.nav_choice == "📥 智能导入" and st.session_state.last_import:
+    elif st.session_state.nav_choice == "📥 AI提取" and st.session_state.last_import:
         r = st.session_state.last_import
         st.subheader(f"📥 {r['菜名']}")
         if st.session_state.reasoning_cache:
@@ -766,7 +767,8 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            save_path = st.text_input("存储路径 (Excel)", value=st.session_state.current_excel_path, help="指定保存的本地Excel文件路径")
+            curr_path = os.path.abspath(st.session_state.current_excel_path)
+            save_path = st.text_input("存储路径 (完整路径)", value=curr_path, help="指定保存的本地Excel文件完整路径")
             if st.form_submit_button("🚀 导入并存档", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
                 save_to_local_append(record, file_path=save_path)
