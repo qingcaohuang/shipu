@@ -276,7 +276,7 @@ if not st.session_state.all_recipes_cache:
     try: st.session_state.all_recipes_cache = load_local_recipes()
     except Exception: st.session_state.all_recipes_cache = []
 
-FONT_PATH = "font.tff" 
+FONT_PATH = "font.ttf" 
 
 # --- 3. 核心逻辑函数 ---
 
@@ -453,8 +453,8 @@ def generate_pdf(recipe):
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
     try:
-        pdfmetrics.registerFont(TTFont('font', FONT_PATH))
-        f_n = 'font'
+        pdfmetrics.registerFont(TTFont('SourceHanSansCN-Regular', FONT_PATH))
+        f_n = 'SourceHanSansCN-Regular'
     except: f_n = 'Helvetica'
 
     def draw_text_block(text, x, y, max_w, line_height=15):
