@@ -463,12 +463,14 @@ with side_col:
     st.subheader("🍳 智汇厨房")
     
     # [新增] 启动时的安全提示
-    st.info(
-        "📢 **数据安全提示**\n\n"
-        "如果你是**新用户**，请记得在关闭程序前下载并保存数据；\n\n"
-        "如果你是**老用户**，可以选择上传原有数据，并在关闭程序前下载并更新数据，否则新旧数据可能会出现覆盖等未知风险。\n\n"
-        "👉 **数据的上传和下载请在【📚 菜谱目录 -> 管理】界面进行**。"
-    )
+    if 'safety_warning_shown' not in st.session_state:
+        st.info(
+            "📢 **数据安全提示**\n\n"
+            "如果你是**新用户**，请记得在关闭程序前下载并保存数据；\n\n"
+            "如果你是**老用户**，可以选择上传原有数据，并在关闭程序前下载并更新数据，否则新旧数据可能会出现覆盖等未知风险。\n\n"
+            "👉 **数据的上传和下载请在【📚 菜谱目录 -> 管理】界面进行**。"
+        )
+        st.session_state.safety_warning_shown = True
     
     # sc1, sc2 = st.columns([4, 1]) # 移除状态灯列
     with st.container():
@@ -560,16 +562,43 @@ with side_col:
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
     
-    # [新增] 关闭页面前的提示
-    st.warning("⚠️ **关闭页面前提示**\n\n请确认已经下载并存档数据，然后关闭页面。")
-
     # 功能配置区块
     bg_colors = {"✨ AI生成": "#FFF5EE", "📥 AI提取": "#F0F9F1", "📚 菜谱目录": "#FFFBE6", "🔍 全文搜索": "#F6F0FA"}
     st.markdown(f'<div class="config-box" style="background-color: {bg_colors.get(st.session_state.nav_choice, "#FFF")};">', unsafe_allow_html=True)
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
-    if st.session_state.nav_choice == "✨ AI生成":
+    # [调整] 优先处理详情页视图，确保在目录和搜索模式下能正确显示内容
+    if st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
+        r = st.session_state.active_recipe
+        st.subheader(f"{r['菜名']}")
+        v, e = st.columns([2, 1])
+        with v:
+            if r.get('故事'): st.info(f"**物语**：{r['故事']}")
+            st.write("**食材清单**"); st.write(r['食材'])
+            st.write("**制作步骤**"); st.write(r['步骤'])
+            if r.get('小贴士'): st.warning(f"💡 贴士：\n\n{r['小贴士']}")
+        with e:
+            un = st.text_input("菜名", r['菜名'])
+            uc = st.text_input("分类", r.get('分类',''))
+            ui = st.text_area("原料", r['食材'], height=110)
+            us = st.text_area("方法", r['步骤'], height=180)
+            ut = st.text_area("备注", r.get('小贴士',''), height=80)
+            cur = {"菜名": un, "食材": ui, "步骤": us, "小贴士": ut, "分类": uc, "故事": r.get('故事','')}
+            if st.button("💾 保存更新", use_container_width=True):
+                match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
+                new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
+                save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
+                st.success("本地已更新。")
+                st.session_state.active_recipe.update(cur); st.rerun()
+            st.divider()
+            st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
+            if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
+                save_to_local_delete(r, file_path=st.session_state.current_excel_path)
+                st.success("已删除。")
+                st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
+
+    elif st.session_state.nav_choice == "✨ AI生成":
         if st.button("🆕 新创作", use_container_width=True):
             st.session_state.last_gen = None; st.session_state.reasoning_cache = None; st.session_state.gen_saved = False; st.rerun()
         an = st.text_input("菜名灵感", placeholder="输入菜名")
@@ -709,16 +738,13 @@ with side_col:
                                 st.session_state.pending_action = None; rerun_safe()
 
                     if st.session_state.get('prepared_zip_bytes'):
-                        st.markdown("**准备就绪。请在本机另存为：**")
-                        save_path = st.text_input("保存路径", value="")
-                        if st.button("💾 保存到本机", key='save_to_disk'):
-                            try:
-                                tpath = Path(save_path.strip() or os.getcwd())
-                                if tpath.suffix == '.zip': out_path = tpath
-                                else: out_path = tpath / st.session_state.get('prepared_zip_filename')
-                                with open(out_path, 'wb') as f: f.write(st.session_state.prepared_zip_bytes)
-                                st.success(f"已保存: {out_path}"); del st.session_state['prepared_zip_bytes']
-                            except Exception as e: st.error(f"保存失败: {e}")
+                        st.download_button(
+                            label="⬇️ 下载导出文件 (ZIP)",
+                            data=st.session_state.prepared_zip_bytes,
+                            file_name=st.session_state.get('prepared_zip_filename', "recipes_export.zip"),
+                            mime="application/zip",
+                            key='download_zip_btn'
+                        )
 
         if not st.session_state.manage_mode:
             itms = st.session_state.all_recipes_cache
@@ -796,35 +822,6 @@ with main_col:
 
         if st.session_state.get('imp_saved'):
             st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 菜谱目录 -> 管理】** 界面下载备份数据。")
-
-    elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
-        r = st.session_state.active_recipe
-        st.subheader(f"{r['菜名']}")
-        v, e = st.columns([2, 1])
-        with v:
-            if r.get('故事'): st.info(f"**物语**：{r['故事']}")
-            st.write("**食材清单**"); st.write(r['食材'])
-            st.write("**制作步骤**"); st.write(r['步骤'])
-            if r.get('小贴士'): st.warning(f"💡 贴士：\n\n{r['小贴士']}")
-        with e:
-            un = st.text_input("菜名", r['菜名'])
-            uc = st.text_input("分类", r.get('分类',''))
-            ui = st.text_area("原料", r['食材'], height=110)
-            us = st.text_area("方法", r['步骤'], height=180)
-            ut = st.text_area("备注", r.get('小贴士',''), height=80)
-            cur = {"菜名": un, "食材": ui, "步骤": us, "小贴士": ut, "分类": uc, "故事": r.get('故事','')}
-            if st.button("💾 保存更新", use_container_width=True):
-                match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
-                new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
-                save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
-                st.success("本地已更新。")
-                st.session_state.active_recipe.update(cur); st.rerun()
-            st.divider()
-            st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
-            if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
-                save_to_local_delete(r, file_path=st.session_state.current_excel_path)
-                st.success("已删除。")
-                st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     else:
         st.title("👋 私房云端厨房")
         st.info("← 请从左侧选择功能模块开始。")
