@@ -462,6 +462,14 @@ with side_col:
     st.markdown(f'<div class="version-text">Cook Lab {VERSION}</div>', unsafe_allow_html=True)
     st.subheader("🍳 智汇厨房")
     
+    # [新增] 启动时的安全提示
+    st.info(
+        "📢 **数据安全提示**\n\n"
+        "如果你是**新用户**，请记得在关闭程序前下载并保存数据；\n\n"
+        "如果你是**老用户**，可以选择上传原有数据，并在关闭程序前下载并更新数据，否则新旧数据可能会出现覆盖等未知风险。\n\n"
+        "👉 **数据的上传和下载请在【📚 菜谱目录 -> 管理】界面进行**。"
+    )
+    
     # sc1, sc2 = st.columns([4, 1]) # 移除状态灯列
     with st.container():
         with st.expander("🔑 AI 接口管理", expanded=False):
@@ -551,6 +559,9 @@ with side_col:
                     if val == "🔍 全文搜索": st.session_state.active_recipe = None
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
+    
+    # [新增] 关闭页面前的提示
+    st.warning("⚠️ **关闭页面前提示**\n\n请确认已经下载并存档数据，然后关闭页面。")
 
     # 功能配置区块
     bg_colors = {"✨ AI生成": "#FFF5EE", "📥 AI提取": "#F0F9F1", "📚 菜谱目录": "#FFFBE6", "🔍 全文搜索": "#F6F0FA"}
@@ -623,6 +634,7 @@ with side_col:
                 
                 with col_down:
                     st.write("⬇️ 保存数据到本地")
+                    st.caption("下载至本机【下载】目录")
                     target_p = st.session_state.current_excel_path
                     if os.path.exists(target_p):
                         with open(target_p, "rb") as f:
@@ -756,16 +768,14 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            if st.form_submit_button("🚀 内容下载保存到本地", use_container_width=True):
+            if st.form_submit_button("🚀 录入云端临时库", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
                 save_to_local_append(record, file_path=st.session_state.current_excel_path)
                 st.session_state.gen_saved = True
+                st.toast("已录入云端临时库", icon="✅")
 
         if st.session_state.get('gen_saved'):
-            st.success("✅ 内容已录入云端缓存。请点击下方按钮下载文件：")
-            if os.path.exists(st.session_state.current_excel_path):
-                with open(st.session_state.current_excel_path, "rb") as f:
-                    st.download_button("⬇️ 下载 Excel 文件", data=f, file_name=os.path.basename(st.session_state.current_excel_path), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 菜谱目录 -> 管理】** 界面下载备份数据。")
 
     elif st.session_state.nav_choice == "📥 AI提取" and st.session_state.last_import:
         r = st.session_state.last_import
@@ -778,16 +788,14 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            if st.form_submit_button("🚀 内容下载保存到本地", use_container_width=True):
+            if st.form_submit_button("🚀 录入云端临时库", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
                 save_to_local_append(record, file_path=st.session_state.current_excel_path)
                 st.session_state.imp_saved = True
+                st.toast("已录入云端临时库", icon="✅")
 
         if st.session_state.get('imp_saved'):
-            st.success("✅ 内容已录入云端缓存。请点击下方按钮下载文件：")
-            if os.path.exists(st.session_state.current_excel_path):
-                with open(st.session_state.current_excel_path, "rb") as f:
-                    st.download_button("⬇️ 下载 Excel 文件", data=f, file_name=os.path.basename(st.session_state.current_excel_path), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 菜谱目录 -> 管理】** 界面下载备份数据。")
 
     elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
