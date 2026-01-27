@@ -276,7 +276,7 @@ if not st.session_state.all_recipes_cache:
     try: st.session_state.all_recipes_cache = load_local_recipes()
     except Exception: st.session_state.all_recipes_cache = []
 
-FONT_PATH = "font.ttf" 
+FONT_PATH = str(Path(get_app_dir()) / "font.ttf")
 
 # --- 3. 核心逻辑函数 ---
 
@@ -455,7 +455,9 @@ def generate_pdf(recipe):
     try:
         pdfmetrics.registerFont(TTFont('SourceHanSansCN-Regular', FONT_PATH))
         f_n = 'SourceHanSansCN-Regular'
-    except: f_n = 'Helvetica'
+    except Exception as e:
+        st.warning(f"⚠️ PDF字体加载失败 ({e})，中文将无法显示。请确保 font.ttf 已上传且位于程序同级目录。")
+        f_n = 'Helvetica'
 
     def draw_text_block(text, x, y, max_w, line_height=15):
         p.setFont(f_n, 10)
