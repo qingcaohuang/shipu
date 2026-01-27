@@ -8,6 +8,7 @@ import requests
 import zipfile
 import time
 import re
+import uuid
 from openai import OpenAI, RateLimitError, APIError
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -134,15 +135,20 @@ EXCEL_PATH = Path(get_app_dir()) / "data.xlsx"
 SHEET_NAME = "Sheet1"
 COLUMNS = ["日期", "菜名", "分类", "食材", "步骤", "小贴士", "故事"]
 
-def ensure_excel():
-    if not EXCEL_PATH.exists():
-        df = pd.DataFrame(columns=COLUMNS)
-        df.to_excel(EXCEL_PATH, index=False, sheet_name=SHEET_NAME)
+def ensure_excel(file_path=None):
+    target = Path(file_path) if file_path else EXCEL_PATH
+    if not target.exists():
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            df = pd.DataFrame(columns=COLUMNS)
+            df.to_excel(target, index=False, sheet_name=SHEET_NAME)
+        except: pass
 
-def load_local_recipes():
-    ensure_excel()
+def load_local_recipes(file_path=None):
+    target = Path(file_path) if file_path else EXCEL_PATH
+    ensure_excel(target)
     try:
-        df = pd.read_excel(EXCEL_PATH, sheet_name=SHEET_NAME, engine="openpyxl")
+        df = pd.read_excel(target, sheet_name=SHEET_NAME, engine="openpyxl")
         for c in COLUMNS:
             if c not in df.columns:
                 df[c] = ""
@@ -152,18 +158,19 @@ def load_local_recipes():
     except Exception:
         return []
 
-def save_to_local_full(records):
-    ensure_excel()
+def save_to_local_full(records, file_path=None):
+    target = Path(file_path) if file_path else EXCEL_PATH
+    ensure_excel(target)
     df = pd.DataFrame(records or [], columns=COLUMNS)
-    df.to_excel(EXCEL_PATH, index=False, sheet_name=SHEET_NAME)
+    df.to_excel(target, index=False, sheet_name=SHEET_NAME)
 
-def save_to_local_append(record):
-    records = load_local_recipes()
+def save_to_local_append(record, file_path=None):
+    records = load_local_recipes(file_path)
     records.append({k: record.get(k, "") for k in COLUMNS})
-    save_to_local_full(records)
+    save_to_local_full(records, file_path)
 
-def save_to_local_update(match_record, new_record):
-    records = load_local_recipes()
+def save_to_local_update(match_record, new_record, file_path=None):
+    records = load_local_recipes(file_path)
     replaced = False
     for i, r in enumerate(records):
         if r.get('菜名') == match_record.get('菜名') and (('故事' not in match_record) or r.get('故事') == match_record.get('故事')):
@@ -172,15 +179,15 @@ def save_to_local_update(match_record, new_record):
             break
     if not replaced:
         records.append({k: new_record.get(k, "") for k in COLUMNS})
-    save_to_local_full(records)
+    save_to_local_full(records, file_path)
 
-def save_to_local_delete(match_record):
-    records = load_local_recipes()
+def save_to_local_delete(match_record, file_path=None):
+    records = load_local_recipes(file_path)
     for i, r in enumerate(records):
         if r.get('菜名') == match_record.get('菜名') and (('故事' not in match_record) or r.get('故事') == match_record.get('故事')):
             records.pop(i)
             break
-    save_to_local_full(records)
+    save_to_local_full(records, file_path)
 
 # --- 2. 初始化所有 Session State ---
 if 'ai_configs' not in st.session_state: 
@@ -212,6 +219,10 @@ if 'selected_style' not in st.session_state: st.session_state.selected_style = "
 if 'active_index' not in st.session_state: st.session_state.active_index = None
 if 'nav_choice' not in st.session_state: st.session_state.nav_choice = "✨ AI生成"
 if 'manage_mode' not in st.session_state: st.session_state.manage_mode = False
+
+if 'current_excel_path' not in st.session_state:
+    # [新增] 云端多用户隔离：默认使用带随机后缀的文件名，避免冲突
+    st.session_state.current_excel_path = f"data_{str(uuid.uuid4())[:8]}.xlsx"
 
 if not st.session_state.all_recipes_cache:
     try: st.session_state.all_recipes_cache = load_local_recipes()
@@ -594,6 +605,24 @@ with side_col:
                 rerun_safe()
 
         if st.session_state.manage_mode:
+            # [新增] 本地文档导入与路径选择功能
+            with st.expander("📥 导入本地食谱文档 / 切换工作文件", expanded=False):
+                st.caption("云端运行时，请上传您的 Excel 文件以加载数据。不同用户请使用不同文件名以确保数据独立。")
+                col_imp1, col_imp2 = st.columns([2, 1])
+                with col_imp1:
+                    up_file = st.file_uploader("上传 Excel (.xlsx)", type=["xlsx"], key="manage_uploader")
+                with col_imp2:
+                    target_p = st.text_input("工作文件路径", value=st.session_state.current_excel_path, key="manage_path_input", help="指定服务器端保存/读取的文件名")
+                    if st.button("🔄 加载/切换", use_container_width=True):
+                        st.session_state.current_excel_path = target_p
+                        if up_file:
+                            with open(target_p, "wb") as f:
+                                f.write(up_file.getbuffer())
+                            st.toast(f"文件已保存至: {target_p}")
+                        st.session_state.all_recipes_cache = load_local_recipes(target_p)
+                        st.success(f"已切换至: {target_p} (共 {len(st.session_state.all_recipes_cache)} 条)")
+                        time.sleep(1); st.rerun()
+
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
             if not categories: st.info("无食谱。")
@@ -720,10 +749,11 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            if st.form_submit_button("🚀 存档至云端", use_container_width=True):
+            save_path = st.text_input("存储路径 (Excel)", value=st.session_state.current_excel_path, help="指定保存的本地Excel文件路径")
+            if st.form_submit_button("🚀 存档", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
-                save_to_local_append(record)
-                st.success("已保存到本地。")
+                save_to_local_append(record, file_path=save_path)
+                st.success(f"已保存到: {save_path}")
 
     elif st.session_state.nav_choice == "📥 智能导入" and st.session_state.last_import:
         r = st.session_state.last_import
@@ -736,12 +766,46 @@ with main_col:
             ci = st.text_area("食材", r['食材'], height=130)
             cs_steps = st.text_area("步骤", r['步骤'], height=220)
             ct = st.text_area("贴士", r['小贴士'], height=80)
-            if st.form_submit_button("🚀 导入并存库", use_container_width=True):
+            save_path = st.text_input("存储路径 (Excel)", value=st.session_state.current_excel_path, help="指定保存的本地Excel文件路径")
+            if st.form_submit_button("🚀 导入并存档", use_container_width=True):
                 record = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": cn, "分类": cat, "食材": ci, "步骤": cs_steps, "小贴士": ct, "故事": r['故事']}
-                save_to_local_append(record)
-                st.success("已保存到本地。")
+                save_to_local_append(record, file_path=save_path)
+                st.success(f"已保存到: {save_path}")
 
-    elif st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
+    elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
+        r = st.session_state.active_recipe
+        st.subheader(f"{r['菜名']}")
+        v, e = st.columns([2, 1])
+        with v:
+            if r.get('故事'): st.info(f"**物语**：{r['故事']}")
+            st.write("**食材清单**"); st.write(r['食材'])
+            st.write("**制作步骤**"); st.write(r['步骤'])
+            if r.get('小贴士'): st.warning(f"💡 贴士：\n\n{r['小贴士']}")
+        with e:
+            un = st.text_input("菜名", r['菜名'])
+            uc = st.text_input("分类", r.get('分类',''))
+            ui = st.text_area("原料", r['食材'], height=110)
+            us = st.text_area("方法", r['步骤'], height=180)
+            ut = st.text_area("备注", r.get('小贴士',''), height=80)
+            cur = {"菜名": un, "食材": ui, "步骤": us, "小贴士": ut, "分类": uc, "故事": r.get('故事','')}
+            if st.button("💾 保存更新", use_container_width=True):
+                match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
+                new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
+                save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
+                st.success("本地已更新。")
+                st.session_state.active_recipe.update(cur); st.rerun()
+            st.divider()
+            st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
+            if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
+                save_to_local_delete(r, file_path=st.session_state.current_excel_path)
+                st.success("已删除。")
+                st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
+    else:
+        st.title("👋 私房云端厨房")
+        st.info("← 请从左侧选择功能模块开始。")nd(record, file_path=save_path)
+                st.success(f"已保存到: {save_path}")
+
+    elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
         st.subheader(f"{r['菜名']}")
         v, e = st.columns([2, 1])
