@@ -572,7 +572,7 @@ with side_col:
     if st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
         st.subheader(f"{r['菜名']}")
-        e, v = st.columns([1, 2])
+        v, e = st.columns([2, 1])
         with v:
             if r.get('故事'): st.info(f"**物语**：{r['故事']}")
             st.write("**食材清单**"); st.write(r['食材'])
