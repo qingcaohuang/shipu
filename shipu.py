@@ -454,7 +454,7 @@ def generate_pdf(recipe):
     width, height = A4
     try:
         pdfmetrics.registerFont(TTFont('font', FONT_PATH))
-        f_n = 'SimHei'
+        f_n = 'font'
     except: f_n = 'Helvetica'
 
     def draw_text_block(text, x, y, max_w, line_height=15):
