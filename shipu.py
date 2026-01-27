@@ -115,14 +115,12 @@ st.markdown(f"""
     }}
     
     /* 详情页卡片样式 */
-    .detail-card {
     .detail-card {{
         background-color: #FFFFFF;
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.04);
         border: 1px solid #F5F5F5;
-    }
     }}
     
     .block-container {{ padding-top: 1.5rem !important; }}
