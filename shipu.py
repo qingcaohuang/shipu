@@ -575,7 +575,6 @@ with side_col:
                 res, rsn = call_deepseek(current_ak_config, mode="generate", name=an, ing=ai, style=cs, notes=ai_notes, use_r1=ur)
                 if res: st.session_state.last_gen = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
-    elif st.session_state.nav_choice == "📥 ":
     elif st.session_state.nav_choice == "📥 AI提取":
         if st.button("🆕 重新提取", use_container_width=True):
             st.session_state.last_import = None; st.session_state.reasoning_cache = None
