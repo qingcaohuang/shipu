@@ -890,7 +890,4 @@ with main_col:
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     else:
         st.title("👋 私房云端厨房")
-        st.info("← 请从左侧选择功能模块开始。")ll_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
-    else:
-        st.title("👋 私房云端厨房")
         st.info("← 请从左侧选择功能模块开始。")
