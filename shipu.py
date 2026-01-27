@@ -276,7 +276,7 @@ if not st.session_state.all_recipes_cache:
     try: st.session_state.all_recipes_cache = load_local_recipes()
     except Exception: st.session_state.all_recipes_cache = []
 
-FONT_PATH = "SimHei.ttf" 
+FONT_PATH = "font.tff" 
 
 # --- 3. 核心逻辑函数 ---
 
@@ -507,7 +507,7 @@ def generate_pdf(recipe):
 side_col, main_col = st.columns([1.6, 4.5])
 
 with side_col:
-    st.markdown(f'<div style="text-align:center; font-weight:bold; font-size:1.2em; color:#FF9F43; margin-bottom:10px;">🍳 智汇厨房</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center; font-weight:bold; font-size:1.2em; color:#FF9F43; margin-bottom:10px;">🍳 私房云端厨房 <span style="font-size:0.6em; opacity:0.5;">{VERSION}</span></div>', unsafe_allow_html=True)
     
     # [新增] 启动时的安全提示
     if 'safety_warning_shown' not in st.session_state:
@@ -515,7 +515,7 @@ with side_col:
             "📢 **数据安全提示**\n\n"
             "如果你是**新用户**，请记得在关闭程序前下载并保存数据；\n\n"
             "如果你是**老用户**，可以选择上传原有数据，并在关闭程序前下载并更新数据，否则新旧数据可能会出现覆盖等未知风险。\n\n"
-            "👉 **数据的上传和下载请在【📚 菜谱目录 -> 管理】界面进行**。"
+            "👉 **数据的上传和下载请在【📚 食谱目录 -> 管理】界面进行**。"
         )
         st.session_state.safety_warning_shown = True
     
@@ -596,7 +596,7 @@ with side_col:
 
     # 2x2 网格导航
     st.markdown("###") # Spacer
-    nav_config = [("✨ AI 生成", "✨ AI生成"), ("📥 AI 提取", "📥 AI提取"), ("📚 菜谱目录", "📚 菜谱目录"), ("🔍 全文搜索", "🔍 全文搜索")]
+    nav_config = [("✨ AI 生成", "✨ AI生成"), ("📥 AI 提取", "📥 AI提取"), ("📚 食谱目录", "📚 食谱目录"), ("🔍 全文搜索", "🔍 全文搜索")]
     for i in range(0, 4, 2):
         nc1, nc2 = st.columns(2)
         for idx, col in enumerate([nc1, nc2]):
@@ -609,8 +609,6 @@ with side_col:
                     if val == "🔍 全文搜索": st.session_state.active_recipe = None
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown(f'<div class="version-text">Cook Lab {VERSION}</div>', unsafe_allow_html=True)
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
@@ -645,7 +643,7 @@ with side_col:
                 res, rsn = call_deepseek(current_ak_config, mode="import", raw_text=txt, use_r1=True)
                 if res: st.session_state.last_import = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
-    elif st.session_state.nav_choice == "📚 菜谱目录":
+    elif st.session_state.nav_choice == "📚 食谱目录":
         colr, colm = st.columns([1,1])
         with colr:
             if st.button("🔄 刷新目录", use_container_width=True):
@@ -818,7 +816,7 @@ with main_col:
                 st.toast("已录入云端临时库", icon="✅")
 
         if st.session_state.get('gen_saved'):
-            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 菜谱目录 -> 管理】** 界面下载备份数据。")
+            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 食谱目录 -> 管理】** 界面下载备份数据。")
 
     elif st.session_state.nav_choice == "📥 AI提取" and st.session_state.last_import:
         r = st.session_state.last_import
@@ -838,9 +836,9 @@ with main_col:
                 st.toast("已录入云端临时库", icon="✅")
 
         if st.session_state.get('imp_saved'):
-            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 菜谱目录 -> 管理】** 界面下载备份数据。")
+            st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 食谱目录 -> 管理】** 界面下载备份数据。")
 
-    elif st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
+    elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
         v, e = st.columns([2, 1])
         with v:
