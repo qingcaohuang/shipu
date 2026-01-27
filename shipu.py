@@ -568,37 +568,7 @@ with side_col:
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
-    # [调整] 优先处理详情页视图，确保在目录和搜索模式下能正确显示内容
-    if st.session_state.nav_choice in ["📚 菜谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
-        r = st.session_state.active_recipe
-        st.subheader(f"{r['菜名']}")
-        v, e = st.columns([2, 1])
-        with v:
-            if r.get('故事'): st.info(f"**物语**：{r['故事']}")
-            st.write("**食材清单**"); st.write(r['食材'])
-            st.write("**制作步骤**"); st.write(r['步骤'])
-            if r.get('小贴士'): st.warning(f"💡 贴士：\n\n{r['小贴士']}")
-        with e:
-            un = st.text_input("菜名", r['菜名'])
-            uc = st.text_input("分类", r.get('分类',''))
-            ui = st.text_area("原料", r['食材'], height=110)
-            us = st.text_area("方法", r['步骤'], height=180)
-            ut = st.text_area("备注", r.get('小贴士',''), height=80)
-            cur = {"菜名": un, "食材": ui, "步骤": us, "小贴士": ut, "分类": uc, "故事": r.get('故事','')}
-            if st.button("💾 保存更新", use_container_width=True):
-                match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
-                new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
-                save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
-                st.success("本地已更新。")
-                st.session_state.active_recipe.update(cur); st.rerun()
-            st.divider()
-            st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
-            if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
-                save_to_local_delete(r, file_path=st.session_state.current_excel_path)
-                st.success("已删除。")
-                st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
-
-    elif st.session_state.nav_choice == "✨ AI生成":
+    if st.session_state.nav_choice == "✨ AI生成":
         if st.button("🆕 新创作", use_container_width=True):
             st.session_state.last_gen = None; st.session_state.reasoning_cache = None; st.session_state.gen_saved = False; st.rerun()
         an = st.text_input("菜名灵感", placeholder="输入菜名")
