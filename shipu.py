@@ -269,7 +269,7 @@ if 'all_recipes_cache' not in st.session_state: st.session_state.all_recipes_cac
 if 'reasoning_cache' not in st.session_state: st.session_state.reasoning_cache = None
 if 'selected_style' not in st.session_state: st.session_state.selected_style = ""
 if 'active_index' not in st.session_state: st.session_state.active_index = None
-if 'nav_choice' not in st.session_state: st.session_state.nav_choice = "✨ AI生成"
+if 'nav_choice' not in st.session_state: st.session_state.nav_choice = "🏠 主页"
 if 'manage_mode' not in st.session_state: st.session_state.manage_mode = False
 
 if 'current_excel_path' not in st.session_state:
@@ -530,96 +530,12 @@ with side_col:
         )
         st.session_state.safety_warning_shown = True
     
-    # sc1, sc2 = st.columns([4, 1]) # 移除状态灯列
-    with st.container(border=True):
-        with st.expander("🔑 AI 接口管理", expanded=False):
-            model_options = list(st.session_state.ai_configs.keys())
-            try: curr_idx = model_options.index(st.session_state.current_config_name)
-            except: curr_idx = 0
-
-            selected_name = st.selectbox("选择当前模型", model_options, index=curr_idx)
-            
-            if selected_name != st.session_state.prev_selection:
-                st.session_state.current_config_name = selected_name
-                st.session_state.prev_selection = selected_name
-                cfg = st.session_state.ai_configs[selected_name]
-                st.session_state.pending_add_model_sync = {"name": selected_name, "url": cfg.get("url", ""), "key": cfg.get("key", ""), "id": cfg.get("model", "")}
-                st.rerun()
-
-            st.divider()
-            
-            # --- 新增诊断工具 ---
-            if "Google" in selected_name or "gemini" in st.session_state.add_model_id.lower():
-                st.caption("Google 连接诊断")
-                if st.button("🔍 测试连接 & 列出可用模型", use_container_width=True):
-                    test_key = st.session_state.add_model_key if st.session_state.add_model_key else st.session_state.ai_configs.get(selected_name, {}).get("key", "")
-                    if not test_key:
-                        st.error("请先输入 API Key")
-                    else:
-                        with st.spinner("正在连接 Google API..."):
-                            success, models, msg = test_google_models(test_key)
-                            if success:
-                                st.success(f"连接成功！您的 Key 支持以下模型：")
-                                st.code("\n".join(models), language="text")
-                                st.info("请从上方列表中复制一个模型名称填入下方的 'Model ID'。")
-                            else:
-                                st.error(f"连接失败: {msg}")
-
-            st.caption("添加/编辑模型配置")
-            col_preset1, col_preset2 = st.columns(2)
-            with col_preset1:
-                if st.button("OpenAI 预设", use_container_width=True):
-                     st.session_state.pending_add_model_sync = {"name": "OpenAI (自定义)", "url": "https://api.openai.com/v1", "key": "", "id": "gpt-4o"}
-                     st.rerun()
-            with col_preset2:
-                if st.button("Google 预设", use_container_width=True):
-                     st.session_state.pending_add_model_sync = {"name": "Google Gemini", "url": "https://generativelanguage.googleapis.com", "key": "", "id": "gemini-2.5-flash"}
-                     st.rerun()
-
-            new_name = st.text_input("配置名称", key="add_model_name")
-            new_url = st.text_input("API Base URL", key="add_model_url", help="Google: 使用默认即可，系统会自动使用原生SDK或REST")
-            new_key = st.text_input("API Key", type="password", key="add_model_key")
-            new_model = st.text_input("Model ID", key="add_model_id")
-            
-            b1, b2 = st.columns(2)
-            with b1:
-                if st.button("💾 保存配置", use_container_width=True):
-                    if new_name and new_key:
-                        st.session_state.ai_configs[new_name] = {"key": new_key, "url": new_url, "model": new_model}
-                        save_ai_configs(st.session_state.ai_configs)
-                        st.session_state.current_config_name = new_name
-                        st.session_state.prev_selection = new_name
-                        st.session_state.pending_add_model_sync = {"name": "", "url": "https://api.deepseek.com", "key": "", "id": "deepseek-chat"}
-                        st.success("已保存")
-                        st.rerun()
-                    else: st.error("缺失名称/Key")
-            with b2:
-                if st.button("🗑️ 删除配置", use_container_width=True):
-                    if len(st.session_state.ai_configs) > 1:
-                        del st.session_state.ai_configs[st.session_state.current_config_name]
-                        save_ai_configs(st.session_state.ai_configs)
-                        st.session_state.current_config_name = list(st.session_state.ai_configs.keys())[0]
-                        st.session_state.prev_selection = st.session_state.current_config_name
-                        st.session_state.pending_add_model_sync = {"name": "", "url": "https://api.deepseek.com", "key": "", "id": "deepseek-chat"}
-                        st.warning("已删除")
-                        st.rerun()
-                    else: st.error("需保留一项")
-
-    # 2x2 网格导航
-    st.markdown("###") # Spacer
-    nav_config = [("✨ AI 生成", "✨ AI生成"), ("📥 AI 提取", "📥 AI提取"), ("📚 食谱目录", "📚 食谱目录"), ("🔍 全文搜索", "🔍 全文搜索")]
-    for i in range(0, 4, 2):
-        nc1, nc2 = st.columns(2)
-        for idx, col in enumerate([nc1, nc2]):
-            lbl, val = nav_config[i+idx]
-            is_active = st.session_state.nav_choice == val
-            with col:
-                st.markdown(f'<div class="{"nav-active" if is_active else ""}">', unsafe_allow_html=True)
-                if st.button(lbl, key=f"btn_{val}", use_container_width=True):
-                    st.session_state.nav_choice = val
-                    if val == "🔍 全文搜索": st.session_state.active_recipe = None
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+    if st.session_state.nav_choice != "🏠 主页":
+        if st.button("🔙 返回主页", use_container_width=True):
+            st.session_state.nav_choice = "🏠 主页"
+            st.session_state.active_recipe = None
+            st.rerun()
+        st.divider()
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
@@ -786,26 +702,28 @@ with side_col:
                     r2 = itms[i+1]
                     if cl2.button(f"{r2.get('菜名')[:12]}", key=f"l_{i+1}", use_container_width=True):
                         st.session_state.active_recipe = r2; st.session_state.active_index = i + 3; st.rerun()
-
-    elif st.session_state.nav_choice == "🔍 全文搜索":
-        kw = st.text_input("关键词", placeholder="搜索...")
-        if kw and st.session_state.all_recipes_cache:
-            rlts = []
-            for i, r in enumerate(st.session_state.all_recipes_cache):
-                txt = f"{r['菜名']}{r['食材']}{r['分类']}".lower()
-                score = difflib.SequenceMatcher(None, kw.lower(), txt).ratio()
-                if kw.lower() in txt: score += 0.5
-                if score > 0.1: rlts.append((score, i, r))
-            rlts.sort(key=lambda x: x[0], reverse=True)
-            for i in range(0, len(rlts), 2):
-                sc1, sc2 = st.columns(2)
-                _, idx1, r1 = rlts[i]
-                if sc1.button(f"🔍 {r1.get('菜名')[:12]}", key=f"s_{idx1}", use_container_width=True):
-                    st.session_state.active_recipe = r1; st.session_state.active_index = idx1 + 2; st.rerun()
-                if i + 1 < len(rlts):
-                    _, idx2, r2 = rlts[i+1]
-                    if sc2.button(f"🔍 {r2.get('菜名')[:12]}", key=f"s_{idx2}", use_container_width=True):
-                        st.session_state.active_recipe = r2; st.session_state.active_index = idx2 + 2; st.rerun()
+        
+        # [新增] 搜索功能整合到目录
+        st.markdown("###")
+        with st.expander("🔍 全文搜索", expanded=False):
+            kw = st.text_input("关键词", placeholder="搜索...")
+            if kw and st.session_state.all_recipes_cache:
+                rlts = []
+                for i, r in enumerate(st.session_state.all_recipes_cache):
+                    txt = f"{r['菜名']}{r['食材']}{r['分类']}".lower()
+                    score = difflib.SequenceMatcher(None, kw.lower(), txt).ratio()
+                    if kw.lower() in txt: score += 0.5
+                    if score > 0.1: rlts.append((score, i, r))
+                rlts.sort(key=lambda x: x[0], reverse=True)
+                for i in range(0, len(rlts), 2):
+                    sc1, sc2 = st.columns(2)
+                    _, idx1, r1 = rlts[i]
+                    if sc1.button(f"🔍 {r1.get('菜名')[:12]}", key=f"s_{idx1}", use_container_width=True):
+                        st.session_state.active_recipe = r1; st.session_state.active_index = idx1 + 2; st.rerun()
+                    if i + 1 < len(rlts):
+                        _, idx2, r2 = rlts[i+1]
+                        if sc2.button(f"🔍 {r2.get('菜名')[:12]}", key=f"s_{idx2}", use_container_width=True):
+                            st.session_state.active_recipe = r2; st.session_state.active_index = idx2 + 2; st.rerun()
 
 # --- 5. 主界面内容 ---
 with main_col:
@@ -817,7 +735,111 @@ with main_col:
         </div>
     """, unsafe_allow_html=True)
 
-    if st.session_state.nav_choice == "✨ AI生成" and st.session_state.last_gen:
+    if st.session_state.nav_choice == "🏠 主页":
+        st.markdown("### 🌟 功能导航")
+        c1, c2 = st.columns(2)
+        with c1:
+            with st.container(border=True):
+                st.markdown("#### ✨ AI 生成")
+                st.caption("输入灵感与食材，AI 为您创作独家食谱。")
+                if st.button("进入创作", key="home_gen", use_container_width=True):
+                    st.session_state.nav_choice = "✨ AI生成"
+                    st.rerun()
+            with st.container(border=True):
+                st.markdown("#### 📚 食谱目录")
+                st.caption("浏览、管理、搜索您的私房食谱库。")
+                if st.button("打开目录", key="home_dir", use_container_width=True):
+                    st.session_state.nav_choice = "📚 食谱目录"
+                    st.rerun()
+        with c2:
+            with st.container(border=True):
+                st.markdown("#### 📥 AI 提取")
+                st.caption("粘贴文本或链接，智能解析整理食谱。")
+                if st.button("开始提取", key="home_imp", use_container_width=True):
+                    st.session_state.nav_choice = "📥 AI提取"
+                    st.rerun()
+            with st.container(border=True):
+                st.markdown("#### 🔑 接口管理")
+                st.caption("配置 OpenAI、DeepSeek、Google 等模型接口。")
+                if st.button("管理配置", key="home_cfg", use_container_width=True):
+                    st.session_state.nav_choice = "🔑 AI接口管理"
+                    st.rerun()
+
+    elif st.session_state.nav_choice == "🔑 AI接口管理":
+        st.subheader("🔑 AI 接口配置")
+        model_options = list(st.session_state.ai_configs.keys())
+        try: curr_idx = model_options.index(st.session_state.current_config_name)
+        except: curr_idx = 0
+
+        selected_name = st.selectbox("选择当前模型", model_options, index=curr_idx)
+        
+        if selected_name != st.session_state.prev_selection:
+            st.session_state.current_config_name = selected_name
+            st.session_state.prev_selection = selected_name
+            cfg = st.session_state.ai_configs[selected_name]
+            st.session_state.pending_add_model_sync = {"name": selected_name, "url": cfg.get("url", ""), "key": cfg.get("key", ""), "id": cfg.get("model", "")}
+            st.rerun()
+
+        st.divider()
+        
+        # --- 新增诊断工具 ---
+        if "Google" in selected_name or "gemini" in st.session_state.add_model_id.lower():
+            st.caption("Google 连接诊断")
+            if st.button("🔍 测试连接 & 列出可用模型", use_container_width=True):
+                test_key = st.session_state.add_model_key if st.session_state.add_model_key else st.session_state.ai_configs.get(selected_name, {}).get("key", "")
+                if not test_key:
+                    st.error("请先输入 API Key")
+                else:
+                    with st.spinner("正在连接 Google API..."):
+                        success, models, msg = test_google_models(test_key)
+                        if success:
+                            st.success(f"连接成功！您的 Key 支持以下模型：")
+                            st.code("\n".join(models), language="text")
+                            st.info("请从上方列表中复制一个模型名称填入下方的 'Model ID'。")
+                        else:
+                            st.error(f"连接失败: {msg}")
+
+        st.caption("添加/编辑模型配置")
+        col_preset1, col_preset2 = st.columns(2)
+        with col_preset1:
+            if st.button("OpenAI 预设", use_container_width=True):
+                    st.session_state.pending_add_model_sync = {"name": "OpenAI (自定义)", "url": "https://api.openai.com/v1", "key": "", "id": "gpt-4o"}
+                    st.rerun()
+        with col_preset2:
+            if st.button("Google 预设", use_container_width=True):
+                    st.session_state.pending_add_model_sync = {"name": "Google Gemini", "url": "https://generativelanguage.googleapis.com", "key": "", "id": "gemini-2.5-flash"}
+                    st.rerun()
+
+        new_name = st.text_input("配置名称", key="add_model_name")
+        new_url = st.text_input("API Base URL", key="add_model_url", help="Google: 使用默认即可，系统会自动使用原生SDK或REST")
+        new_key = st.text_input("API Key", type="password", key="add_model_key")
+        new_model = st.text_input("Model ID", key="add_model_id")
+        
+        b1, b2 = st.columns(2)
+        with b1:
+            if st.button("💾 保存配置", use_container_width=True):
+                if new_name and new_key:
+                    st.session_state.ai_configs[new_name] = {"key": new_key, "url": new_url, "model": new_model}
+                    save_ai_configs(st.session_state.ai_configs)
+                    st.session_state.current_config_name = new_name
+                    st.session_state.prev_selection = new_name
+                    st.session_state.pending_add_model_sync = {"name": "", "url": "https://api.deepseek.com", "key": "", "id": "deepseek-chat"}
+                    st.success("已保存")
+                    st.rerun()
+                else: st.error("缺失名称/Key")
+        with b2:
+            if st.button("🗑️ 删除配置", use_container_width=True):
+                if len(st.session_state.ai_configs) > 1:
+                    del st.session_state.ai_configs[st.session_state.current_config_name]
+                    save_ai_configs(st.session_state.ai_configs)
+                    st.session_state.current_config_name = list(st.session_state.ai_configs.keys())[0]
+                    st.session_state.prev_selection = st.session_state.current_config_name
+                    st.session_state.pending_add_model_sync = {"name": "", "url": "https://api.deepseek.com", "key": "", "id": "deepseek-chat"}
+                    st.warning("已删除")
+                    st.rerun()
+                else: st.error("需保留一项")
+
+    elif st.session_state.nav_choice == "✨ AI生成" and st.session_state.last_gen:
         r = st.session_state.last_gen
         st.subheader(f"✨ {r['菜名']}")
         if st.session_state.reasoning_cache:
@@ -857,7 +879,7 @@ with main_col:
         if st.session_state.get('imp_saved'):
             st.success("✅ 已保存至云端临时库。\n\n请前往 **【📚 食谱目录 -> 管理】** 界面下载备份数据。")
 
-    elif st.session_state.nav_choice in ["📚 食谱目录", "🔍 全文搜索"] and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
+    elif st.session_state.nav_choice == "📚 食谱目录" and st.session_state.active_recipe and (not st.session_state.manage_mode or st.session_state.manage_view):
         r = st.session_state.active_recipe
         v, e = st.columns([2, 1])
         with v:
@@ -898,6 +920,6 @@ with main_col:
                 save_to_local_delete(r, file_path=st.session_state.current_excel_path)
                 st.success("已删除。")
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
-    else:
-        st.subheader("👋 欢迎使用")
-        st.info("← 请从左侧选择功能模块开始。")
+    elif st.session_state.nav_choice != "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
+        st.subheader("👋 准备就绪")
+        st.info("← 请从左侧输入内容或选择食谱开始。")
