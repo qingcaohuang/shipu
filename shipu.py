@@ -28,7 +28,7 @@ except ImportError:
 st.set_page_config(page_title="AI云端厨房实验室", layout="wide")
 
 # 版本号定义
-VERSION = "V1.5.0 (Local-Only)"
+VERSION = "V1.5.0 (streamlit-Only)"
 CONFIG_FILE = ".ai_configs.json"
 
 # [新增] 注入 JS 拦截浏览器关闭/刷新事件，弹出原生确认对话框
@@ -703,35 +703,13 @@ with side_col:
                     r2 = itms[i+1]
                     if cl2.button(f"{r2.get('菜名')[:12]}", key=f"l_{i+1}", use_container_width=True):
                         st.session_state.active_recipe = r2; st.session_state.active_index = i + 3; st.rerun()
-        
-        # [新增] 搜索功能整合到目录
-        st.markdown("###")
-        with st.expander("🔍 全文搜索", expanded=False):
-            kw = st.text_input("关键词", placeholder="搜索...")
-            if kw and st.session_state.all_recipes_cache:
-                rlts = []
-                for i, r in enumerate(st.session_state.all_recipes_cache):
-                    txt = f"{r['菜名']}{r['食材']}{r['分类']}".lower()
-                    score = difflib.SequenceMatcher(None, kw.lower(), txt).ratio()
-                    if kw.lower() in txt: score += 0.5
-                    if score > 0.1: rlts.append((score, i, r))
-                rlts.sort(key=lambda x: x[0], reverse=True)
-                for i in range(0, len(rlts), 2):
-                    sc1, sc2 = st.columns(2)
-                    _, idx1, r1 = rlts[i]
-                    if sc1.button(f"🔍 {r1.get('菜名')[:12]}", key=f"s_{idx1}", use_container_width=True):
-                        st.session_state.active_recipe = r1; st.session_state.active_index = idx1 + 2; st.rerun()
-                    if i + 1 < len(rlts):
-                        _, idx2, r2 = rlts[i+1]
-                        if sc2.button(f"🔍 {r2.get('菜名')[:12]}", key=f"s_{idx2}", use_container_width=True):
-                            st.session_state.active_recipe = r2; st.session_state.active_index = idx2 + 2; st.rerun()
 
 # --- 5. 主界面内容 ---
 with main_col:
     # 顶部标题与版本号 (移至右侧栏) - 字体加大
     st.markdown(f"""
         <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-            <span style="font-weight:bold; font-size:1.8em; color:#FF9F43;">🍳 私房云端厨房</span>
+            <span style="font-weight:bold; font-size:2.0em; color:#FF9F43;">🍳 私房云端厨房</span>
             <span style="color:#999; font-size:0.8em; margin-left: 10px;">{VERSION}</span>
         </div>
     """, unsafe_allow_html=True)
