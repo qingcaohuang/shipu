@@ -944,10 +944,4 @@ with main_col:
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     elif st.session_state.nav_choice != "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
         st.subheader("👋 准备就绪")
-        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
-        st.subheader("👋 准备就绪")
-        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
-        st.subheader("👋 准备就绪")
-        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
-        st.subheader("👋 准备就绪")
         st.info("← 请从左侧输入内容或选择食谱开始。")
