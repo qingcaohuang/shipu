@@ -737,33 +737,35 @@ with main_col:
     """, unsafe_allow_html=True)
 
     if st.session_state.nav_choice == "🏠 主页":
-        st.markdown("###")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.image("https://placehold.co/600x300/FF9F43/FFFFFF/png?text=👨‍🍳+AI+Creation&font=roboto", use_container_width=True)
-            if st.button("✨ AI 生成", key="home_gen", use_container_width=True, help="输入食材和灵感，让 AI 为您定制专属食谱"):
-                st.session_state.nav_choice = "✨ AI生成"
-                st.rerun()
-            
-            st.markdown("###")
-            
-            st.image("https://placehold.co/600x300/54a0ff/FFFFFF/png?text=📖+Recipe+Book&font=roboto", use_container_width=True)
-            if st.button("📚 食谱目录", key="home_dir", use_container_width=True, help="查看、管理和搜索您保存的所有食谱"):
-                st.session_state.nav_choice = "📚 食谱目录"
-                st.rerun()
+        # 居中布局容器，调整图片高度为原先的75% (300 -> 225)
+        _, mid_col, _ = st.columns([0.5, 5, 0.5])
+        with mid_col:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.image("https://placehold.co/600x225/FF9F43/FFFFFF/png?text=👨‍🍳+AI+Creation&font=roboto", use_container_width=True)
+                if st.button("✨ AI 生成", key="home_gen", use_container_width=True, help="输入食材和灵感，让 AI 为您定制专属食谱"):
+                    st.session_state.nav_choice = "✨ AI生成"
+                    st.rerun()
                 
-        with c2:
-            st.image("https://placehold.co/600x300/1dd1a1/FFFFFF/png?text=+Smart+Extract&font=roboto", use_container_width=True)
-            if st.button("📥 AI 提取", key="home_imp", use_container_width=True, help="粘贴网页链接或文本，智能解析并整理成食谱"):
-                st.session_state.nav_choice = "📥 AI提取"
-                st.rerun()
-            
-            st.markdown("###")
-            
-            st.image("https://placehold.co/600x300/5f27cd/FFFFFF/png?text=🔧+System+Setup&font=roboto", use_container_width=True)
-            if st.button("🔑 接口管理", key="home_cfg", use_container_width=True, help="配置 AI 模型接口参数及查看使用帮助"):
-                st.session_state.nav_choice = "🔑 AI接口管理"
-                st.rerun()
+                st.markdown("###")
+                
+                st.image("https://placehold.co/600x225/54a0ff/FFFFFF/png?text=📖+Recipe+Book&font=roboto", use_container_width=True)
+                if st.button("📚 食谱目录", key="home_dir", use_container_width=True, help="查看、管理和搜索您保存的所有食谱"):
+                    st.session_state.nav_choice = "📚 食谱目录"
+                    st.rerun()
+                    
+            with c2:
+                st.image("https://placehold.co/600x225/1dd1a1/FFFFFF/png?text=🔗+Smart+Extract&font=roboto", use_container_width=True)
+                if st.button("📥 AI 提取", key="home_imp", use_container_width=True, help="粘贴网页链接或文本，智能解析并整理成食谱"):
+                    st.session_state.nav_choice = "📥 AI提取"
+                    st.rerun()
+                
+                st.markdown("###")
+                
+                st.image("https://placehold.co/600x225/5f27cd/FFFFFF/png?text=🔧+System+Setup&font=roboto", use_container_width=True)
+                if st.button("🔑 接口管理", key="home_cfg", use_container_width=True, help="配置 AI 模型接口参数及查看使用帮助"):
+                    st.session_state.nav_choice = "🔑 AI接口管理"
+                    st.rerun()
 
     elif st.session_state.nav_choice == "🔑 AI接口管理":
         st.subheader("🔑 AI 接口配置")
@@ -941,5 +943,11 @@ with main_col:
                 st.success("已删除。")
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     elif st.session_state.nav_choice != "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
+        st.subheader("👋 准备就绪")
+        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
+        st.subheader("👋 准备就绪")
+        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
+        st.subheader("👋 准备就绪")
+        st.info("← 请从左侧输入内容或选择食谱开始。")!= "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
         st.subheader("👋 准备就绪")
         st.info("← 请从左侧输入内容或选择食谱开始。")
