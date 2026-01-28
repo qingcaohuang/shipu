@@ -576,10 +576,16 @@ with side_col:
         r1_c1, r1_c2 = st.columns(2)
         with r1_c1:
             if st.button("📂 数据存取", use_container_width=True):
+                st.session_state.show_side_search = False
+                st.session_state.active_recipe = None
+                st.session_state.manage_view = False
                 st.session_state.show_side_data = not st.session_state.get('show_side_data', False)
+                st.rerun()
         with r1_c2:
             lbl_mgr = "✅ 管理中" if st.session_state.manage_mode else "🗂️ 食谱管理"
             if st.button(lbl_mgr, use_container_width=True):
+                st.session_state.show_side_data = False
+                st.session_state.show_side_search = False
                 st.session_state.manage_mode = not st.session_state.manage_mode
                 st.session_state.active_recipe = None
                 st.session_state.manage_view = False
@@ -588,11 +594,20 @@ with side_col:
         r2_c1, r2_c2 = st.columns(2)
         with r2_c1:
             if st.button("🔍 全文搜索", use_container_width=True):
+                st.session_state.show_side_data = False
+                st.session_state.active_recipe = None
+                st.session_state.manage_view = False
                 st.session_state.show_side_search = not st.session_state.get('show_side_search', False)
+                st.rerun()
         with r2_c2:
             if st.button("🔄 刷新目录", use_container_width=True):
+                st.session_state.show_side_data = False
+                st.session_state.show_side_search = False
+                st.session_state.active_recipe = None
+                st.session_state.manage_view = False
                 st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
                 st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
+                st.rerun()
         
         st.markdown("###")
 
