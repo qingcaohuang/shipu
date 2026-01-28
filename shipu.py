@@ -889,5 +889,5 @@ with main_col:
                 st.success("已删除。")
                 st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     else:
-        st.title("👋 私房云端厨房")
+        st.subheader("👋 欢迎使用")
         st.info("← 请从左侧选择功能模块开始。")
