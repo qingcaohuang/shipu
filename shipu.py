@@ -591,32 +591,6 @@ with side_col:
                 rerun_safe()
 
         if st.session_state.manage_mode:
-            # [修改] 简化为本地数据上传/下载模式，隐藏路径细节
-            with st.expander("📂 数据存取 (本地 <-> 云端)", expanded=True):
-                st.caption("当前操作的是云端临时数据。您可以上传本地 Excel 恢复工作，或将当前数据下载到本地保存。")
-                
-                col_up, col_down = st.columns(2)
-                with col_up:
-                    up_file = st.file_uploader("📤 上传本地 Excel (覆盖当前)", type=["xlsx"], key="manage_uploader")
-                    if up_file:
-                        if st.button("⚠️ 确认覆盖并加载", use_container_width=True):
-                            target_p = st.session_state.current_excel_path
-                            with open(target_p, "wb") as f:
-                                f.write(up_file.getbuffer())
-                            st.session_state.all_recipes_cache = load_local_recipes(target_p)
-                            st.toast(f"已加载数据，共 {len(st.session_state.all_recipes_cache)} 条")
-                            time.sleep(1); st.rerun()
-                
-                with col_down:
-                    st.write("⬇️ 保存数据到本地")
-                    st.caption("下载至本机【下载】目录")
-                    target_p = st.session_state.current_excel_path
-                    if os.path.exists(target_p):
-                        with open(target_p, "rb") as f:
-                            st.download_button("💾 下载 Excel 文件", data=f, file_name=f"recipes_{datetime.now().strftime('%Y%m%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
-                    else:
-                        st.info("暂无数据")
-
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
             if not categories: st.info("无食谱。")
