@@ -520,8 +520,6 @@ def generate_pdf(recipe):
 side_col, main_col = st.columns([1.6, 4.5])
 
 with side_col:
-    st.markdown(f'<div style="text-align:center; font-weight:bold; font-size:1.2em; color:#FF9F43; margin-bottom:10px;">🍳 私房云端厨房 <span style="font-size:0.6em; opacity:0.5;">{VERSION}</span></div>', unsafe_allow_html=True)
-    
     # [新增] 启动时的安全提示
     if 'safety_warning_shown' not in st.session_state:
         st.info(
