@@ -908,18 +908,22 @@ with main_col:
             us = st.text_area("方法", r['步骤'], height=180)
             ut = st.text_area("备注", r.get('小贴士',''), height=80)
             cur = {"菜名": un, "食材": ui, "步骤": us, "小贴士": ut, "分类": uc, "故事": r.get('故事','')}
-            if st.button("💾 保存更新", use_container_width=True):
-                match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
-                new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
-                save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
-                st.success("本地已更新。")
-                st.session_state.active_recipe.update(cur); st.rerun()
-            st.divider()
-            st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
-            if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
-                save_to_local_delete(r, file_path=st.session_state.current_excel_path)
-                st.success("已删除。")
-                st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
+            
+            b1, b2, b3 = st.columns(3)
+            with b1:
+                if st.button("💾 保存更新", use_container_width=True):
+                    match = {"菜名": r.get('菜名'), "故事": r.get('故事','')}
+                    new_rec = {"日期": datetime.now().strftime("%Y-%m-%d"), "菜名": un, "分类": uc, "食材": ui, "步骤": us, "小贴士": ut, "故事": r.get('故事','')}
+                    save_to_local_update(match, new_rec, file_path=st.session_state.current_excel_path)
+                    st.success("本地已更新。")
+                    st.session_state.active_recipe.update(cur); st.rerun()
+            with b2:
+                st.download_button("📥 PDF", data=generate_pdf(cur), file_name=f"{un}.pdf", mime="application/pdf", use_container_width=True)
+            with b3:
+                if st.button("🗑️ 彻底删除", type="primary", use_container_width=True):
+                    save_to_local_delete(r, file_path=st.session_state.current_excel_path)
+                    st.success("已删除。")
+                    st.session_state.all_recipes_cache = []; st.session_state.active_recipe = None; st.rerun()
     elif st.session_state.nav_choice != "🏠 主页" and st.session_state.nav_choice != "🔑 AI接口管理":
         st.subheader("👋 准备就绪")
         st.info("← 请从左侧输入内容或选择食谱开始。")
