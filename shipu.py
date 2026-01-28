@@ -572,6 +572,72 @@ with side_col:
                 if res: st.session_state.last_import = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
     elif st.session_state.nav_choice == "📚 食谱目录":
+        # 功能键区域：2行 x 2列
+        r1_c1, r1_c2 = st.columns(2)
+        with r1_c1:
+            if st.button("📂 数据存取", use_container_width=True):
+                st.session_state.show_side_data = not st.session_state.get('show_side_data', False)
+        with r1_c2:
+            lbl_mgr = "✅ 管理中" if st.session_state.manage_mode else "🗂️ 食谱管理"
+            if st.button(lbl_mgr, use_container_width=True):
+                st.session_state.manage_mode = not st.session_state.manage_mode
+                st.session_state.active_recipe = None
+                st.session_state.manage_view = False
+                st.rerun()
+        
+        r2_c1, r2_c2 = st.columns(2)
+        with r2_c1:
+            if st.button("🔍 全文搜索", use_container_width=True):
+                st.session_state.show_side_search = not st.session_state.get('show_side_search', False)
+        with r2_c2:
+            if st.button("🔄 刷新目录", use_container_width=True):
+                st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
+                st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
+        
+        st.markdown("###")
+
+        # 数据存取面板
+        if st.session_state.get('show_side_data', False):
+            with st.container(border=True):
+                st.caption("📂 数据存取")
+                up_file = st.file_uploader("上传 Excel", type=["xlsx"], key="side_up", label_visibility="collapsed")
+                if up_file:
+                    if st.button("⚠️ 确认覆盖", use_container_width=True):
+                        target_p = st.session_state.current_excel_path
+                        with open(target_p, "wb") as f: f.write(up_file.getbuffer())
+                        st.session_state.all_recipes_cache = load_local_recipes(target_p)
+                        st.toast("数据已加载"); time.sleep(1); st.rerun()
+                
+                if os.path.exists(st.session_state.current_excel_path):
+                    with open(st.session_state.current_excel_path, "rb") as f:
+                        st.download_button("💾 下载备份", data=f, file_name=f"recipes_{datetime.now().strftime('%Y%m%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+
+        # 全文搜索面板
+        if st.session_state.get('show_side_search', False):
+            with st.container(border=True):
+                st.caption("🔍 全文搜索")
+                kw = st.text_input("关键词", placeholder="搜菜名/食材...", key="side_search_kw", label_visibility="collapsed")
+                if kw and st.session_state.all_recipes_cache:
+                    rlts = []
+                    for i, r in enumerate(st.session_state.all_recipes_cache):
+                        txt = f"{r['菜名']}{r['食材']}{r['分类']}".lower()
+                        score = difflib.SequenceMatcher(None, kw.lower(), txt).ratio()
+                        if kw.lower() in txt: score += 0.5
+                        if score > 0.1: rlts.append((score, i, r))
+                    rlts.sort(key=lambda x: x[0], reverse=True)
+                    
+                    if rlts:
+                        st.caption(f"找到 {len(rlts)} 条")
+                        for _, idx, r in rlts:
+                            if st.button(f"📄 {r.get('菜名')}", key=f"side_s_{idx}", use_container_width=True):
+                                st.session_state.active_recipe = r
+                                st.session_state.active_index = idx + 2
+                                st.session_state.nav_choice = "📚 食谱目录"
+                                st.session_state.manage_mode = False
+                                st.rerun()
+                    else:
+                        st.warning("无结果")
+
         if st.session_state.manage_mode:
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
