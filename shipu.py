@@ -520,7 +520,15 @@ def generate_pdf(recipe):
 side_col, main_col = st.columns([1.6, 4.5])
 
 with side_col:
-    # [新增] 启动时的安全提示
+    if st.session_state.nav_choice != "🏠 主页":
+        c_bk, _ = st.columns([1, 4])
+        with c_bk:
+            if st.button("🏠", key="back_home_icon", help="返回主页"):
+                st.session_state.nav_choice = "🏠 主页"
+                st.session_state.active_recipe = None
+                st.rerun()
+        st.markdown('<div style="border-bottom: 1px solid #eee; margin-top: 10px; margin-bottom: 20px;"></div>', unsafe_allow_html=True)
+
     if 'safety_warning_shown' not in st.session_state:
         st.info(
             "📢 **数据安全提示**\n\n"
@@ -529,13 +537,6 @@ with side_col:
             "👉 **数据的上传和下载请在【📚 食谱目录 -> 管理】界面进行**。"
         )
         st.session_state.safety_warning_shown = True
-    
-    if st.session_state.nav_choice != "🏠 主页":
-        if st.button("🔙 返回主页", use_container_width=True):
-            st.session_state.nav_choice = "🏠 主页"
-            st.session_state.active_recipe = None
-            st.rerun()
-        st.divider()
     
     current_ak_config = st.session_state.ai_configs.get(st.session_state.current_config_name, {"key": ""})
 
@@ -736,34 +737,33 @@ with main_col:
     """, unsafe_allow_html=True)
 
     if st.session_state.nav_choice == "🏠 主页":
-        st.markdown("### 🌟 功能导航")
+        st.markdown("###")
         c1, c2 = st.columns(2)
         with c1:
-            with st.container(border=True):
-                st.markdown("#### ✨ AI 生成")
-                st.caption("输入灵感与食材，AI 为您创作独家食谱。")
-                if st.button("进入创作", key="home_gen", use_container_width=True):
-                    st.session_state.nav_choice = "✨ AI生成"
-                    st.rerun()
-            with st.container(border=True):
-                st.markdown("#### 📚 食谱目录")
-                st.caption("浏览、管理、搜索您的私房食谱库。")
-                if st.button("打开目录", key="home_dir", use_container_width=True):
-                    st.session_state.nav_choice = "📚 食谱目录"
-                    st.rerun()
+            st.image("https://placehold.co/600x300/FF9F43/FFFFFF/png?text=AI+Chef&font=roboto", use_container_width=True)
+            if st.button("✨ AI 生成", key="home_gen", use_container_width=True):
+                st.session_state.nav_choice = "✨ AI生成"
+                st.rerun()
+            
+            st.markdown("###")
+            
+            st.image("https://placehold.co/600x300/54a0ff/FFFFFF/png?text=Recipe+Book&font=roboto", use_container_width=True)
+            if st.button("📚 食谱目录", key="home_dir", use_container_width=True):
+                st.session_state.nav_choice = "📚 食谱目录"
+                st.rerun()
+                
         with c2:
-            with st.container(border=True):
-                st.markdown("#### 📥 AI 提取")
-                st.caption("粘贴文本或链接，智能解析整理食谱。")
-                if st.button("开始提取", key="home_imp", use_container_width=True):
-                    st.session_state.nav_choice = "📥 AI提取"
-                    st.rerun()
-            with st.container(border=True):
-                st.markdown("#### 🔑 接口管理")
-                st.caption("配置 OpenAI、DeepSeek、Google 等模型接口。")
-                if st.button("管理配置", key="home_cfg", use_container_width=True):
-                    st.session_state.nav_choice = "🔑 AI接口管理"
-                    st.rerun()
+            st.image("https://placehold.co/600x300/1dd1a1/FFFFFF/png?text=Smart+Import&font=roboto", use_container_width=True)
+            if st.button("📥 AI 提取", key="home_imp", use_container_width=True):
+                st.session_state.nav_choice = "📥 AI提取"
+                st.rerun()
+            
+            st.markdown("###")
+            
+            st.image("https://placehold.co/600x300/5f27cd/FFFFFF/png?text=Settings&font=roboto", use_container_width=True)
+            if st.button("🔑 接口管理", key="home_cfg", use_container_width=True):
+                st.session_state.nav_choice = "🔑 AI接口管理"
+                st.rerun()
 
     elif st.session_state.nav_choice == "🔑 AI接口管理":
         st.subheader("🔑 AI 接口配置")
