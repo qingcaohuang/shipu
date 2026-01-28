@@ -49,15 +49,19 @@ st.markdown(f"""
     <style>
     /* 全局字体与背景 - 温暖的米白色背景 */
     .stApp {{
-        background-color: #F9F9F9;
+        background-color: #FFFFFF;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }}
     
     /* 侧边栏样式 - 纯白背景加轻微阴影 */
     section[data-testid="stSidebar"] {{
         background-color: #FFFFFF;
-        border-right: 1px solid #F0F0F0;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+        border-right: 1px solid #E0E0E0;
+    }}
+
+    /* 侧边栏强制黑白高对比 */
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] .streamlit-expanderHeader {{
+        color: #000000 !important;
     }}
 
     /* 调整垂直间距 */
@@ -70,7 +74,7 @@ st.markdown(f"""
         border-radius: 8px !important;
         border: 1px solid #E0E0E0 !important;
         background-color: #FFFFFF !important;
-        color: #4A4A4A !important;
+        color: #000000 !important;
         font-weight: 500 !important;
         height: 40px !important;
         transition: all 0.2s ease-in-out !important;
@@ -809,9 +813,9 @@ with side_col:
 with main_col:
     # 顶部标题与版本号 (移至右侧栏) - 字体加大
     st.markdown(f"""
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-            <div style="font-weight:bold; font-size:1.8em; color:#FF9F43;">🍳 私房云端厨房</div>
-            <div style="color:#999; font-size:0.8em;">{VERSION}</div>
+        <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <span style="font-weight:bold; font-size:1.8em; color:#FF9F43;">🍳 私房云端厨房</span>
+            <span style="color:#999; font-size:0.8em; margin-left: 10px;">{VERSION}</span>
         </div>
     """, unsafe_allow_html=True)
 
