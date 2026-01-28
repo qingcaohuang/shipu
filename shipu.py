@@ -740,28 +740,28 @@ with main_col:
         st.markdown("###")
         c1, c2 = st.columns(2)
         with c1:
-            st.image("https://placehold.co/600x300/FF9F43/FFFFFF/png?text=AI+Chef&font=roboto", use_container_width=True)
-            if st.button("✨ AI 生成", key="home_gen", use_container_width=True):
+            st.image("https://placehold.co/600x300/FF9F43/FFFFFF/png?text=👨‍🍳+AI+Creation&font=roboto", use_container_width=True)
+            if st.button("✨ AI 生成", key="home_gen", use_container_width=True, help="输入食材和灵感，让 AI 为您定制专属食谱"):
                 st.session_state.nav_choice = "✨ AI生成"
                 st.rerun()
             
             st.markdown("###")
             
-            st.image("https://placehold.co/600x300/54a0ff/FFFFFF/png?text=Recipe+Book&font=roboto", use_container_width=True)
-            if st.button("📚 食谱目录", key="home_dir", use_container_width=True):
+            st.image("https://placehold.co/600x300/54a0ff/FFFFFF/png?text=📖+Recipe+Book&font=roboto", use_container_width=True)
+            if st.button("📚 食谱目录", key="home_dir", use_container_width=True, help="查看、管理和搜索您保存的所有食谱"):
                 st.session_state.nav_choice = "📚 食谱目录"
                 st.rerun()
                 
         with c2:
-            st.image("https://placehold.co/600x300/1dd1a1/FFFFFF/png?text=Smart+Import&font=roboto", use_container_width=True)
-            if st.button("📥 AI 提取", key="home_imp", use_container_width=True):
+            st.image("https://placehold.co/600x300/1dd1a1/FFFFFF/png?text=+Smart+Extract&font=roboto", use_container_width=True)
+            if st.button("📥 AI 提取", key="home_imp", use_container_width=True, help="粘贴网页链接或文本，智能解析并整理成食谱"):
                 st.session_state.nav_choice = "📥 AI提取"
                 st.rerun()
             
             st.markdown("###")
             
-            st.image("https://placehold.co/600x300/5f27cd/FFFFFF/png?text=Settings&font=roboto", use_container_width=True)
-            if st.button("🔑 接口管理", key="home_cfg", use_container_width=True):
+            st.image("https://placehold.co/600x300/5f27cd/FFFFFF/png?text=🔧+System+Setup&font=roboto", use_container_width=True)
+            if st.button("🔑 接口管理", key="home_cfg", use_container_width=True, help="配置 AI 模型接口参数及查看使用帮助"):
                 st.session_state.nav_choice = "🔑 AI接口管理"
                 st.rerun()
 
@@ -838,6 +838,26 @@ with main_col:
                     st.warning("已删除")
                     st.rerun()
                 else: st.error("需保留一项")
+        
+        st.markdown("###")
+        with st.expander("📘 使用帮助 / Help", expanded=False):
+            st.markdown("""
+            #### 🌟 快速入门
+            1. **配置 AI**: 首次使用请在当前页面配置 API Key。推荐使用 DeepSeek 或 Google Gemini。
+            2. **创作食谱**: 点击主页的【✨ AI 生成】，输入想吃的菜名或手头的食材，AI 会为您生成详细步骤。
+            3. **整理收藏**: 在网上看到好的食谱？复制链接或文字，使用【📥 AI 提取】功能一键整理入库。
+            4. **导出分享**: 在【📚 食谱目录】中，您可以勾选食谱导出为 PDF 文件，方便打印或分享。
+            
+            #### 🔑 API Key 获取指南
+            - **DeepSeek**: 访问 [DeepSeek 开放平台](https://platform.deepseek.com/) 申请。
+            - **Google Gemini**: 访问 [Google AI Studio](https://aistudio.google.com/) 获取免费 Key。
+            - **OpenAI**: 访问 [OpenAI Platform](https://platform.openai.com/)。
+            
+            #### ⚠️ 注意事项
+            - 本程序数据默认存储在云端临时空间，**关闭网页后可能会丢失**。
+            - 请务必在【📚 食谱目录 -> 管理】中定期**下载备份**您的数据到本地。
+            - 下次使用时，可上传备份文件恢复数据。
+            """)
 
     elif st.session_state.nav_choice == "✨ AI生成" and st.session_state.last_gen:
         r = st.session_state.last_gen
