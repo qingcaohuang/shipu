@@ -807,6 +807,14 @@ with side_col:
 
 # --- 5. 主界面内容 ---
 with main_col:
+    # 顶部标题与版本号 (移至右侧栏) - 字体加大
+    st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <div style="font-weight:bold; font-size:1.8em; color:#FF9F43;">🍳 私房云端厨房</div>
+            <div style="color:#999; font-size:0.8em;">{VERSION}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
     if st.session_state.nav_choice == "✨ AI生成" and st.session_state.last_gen:
         r = st.session_state.last_gen
         st.subheader(f"✨ {r['菜名']}")
