@@ -572,24 +572,6 @@ with side_col:
                 if res: st.session_state.last_import = res; st.session_state.reasoning_cache = rsn; st.rerun()
 
     elif st.session_state.nav_choice == "📚 食谱目录":
-        colr, colm = st.columns([1,1])
-        with colr:
-            if st.button("🔄 刷新目录", use_container_width=True):
-                try:
-                    st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
-                    st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
-                    st.session_state.all_recipes_cache = load_local_recipes(st.session_state.current_excel_path)
-                    st.toast(f"已刷新，共 {len(st.session_state.all_recipes_cache)} 条")
-                except Exception as e: st.warning(f"刷新失败: {e}")
-        with colm:
-            if st.button("🗂️ 食谱管理", use_container_width=True):
-                st.session_state.manage_mode = not st.session_state.manage_mode
-                if st.session_state.manage_mode:
-                    st.session_state.active_recipe = None
-                    st.session_state.manage_view = False
-                else: st.session_state.manage_view = False
-                rerun_safe()
-
         if st.session_state.manage_mode:
             records_all = st.session_state.all_recipes_cache or []
             categories = ["全部"] + list(dict.fromkeys([ (r.get('分类') or '未分类') for r in records_all ]))
